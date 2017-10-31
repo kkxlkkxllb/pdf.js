@@ -1797,7 +1797,7 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
     border: none;
     box-shadow: none;
     background-clip: content-box;
-    background-color: white;
+    /*background-color: white;*/
   }
 
   .page[data-loaded] {
@@ -1951,4 +1951,44 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   #scaleSelectContainer {
     display: none;
   }
+}
+
+.cropper-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.cropper-modal {
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  position: absolute;
+  background-color: rgba(0,0,0,0.3);
+}
+.cropper-move {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: move;
+}
+.clone-bg {
+  background-color: #F1E8B4;
+}
+.cropper-area {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  outline: 2px solid #39f;
+  outline-color: rgba(51, 153, 255, 0.75);
+  visibility: hidden;
 }

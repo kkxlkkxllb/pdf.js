@@ -56,7 +56,7 @@ const TempImageFactory = (function TempImageFactoryClosure() {
         tempCanvas.mozOpaque = true;
       }
 
-      let ctx = tempCanvas.getContext('2d', { alpha: false, });
+      let ctx = tempCanvas.getContext('2d', { alpha: true, });
       ctx.save();
       ctx.fillStyle = 'rgb(255, 255, 255)';
       ctx.fillRect(0, 0, width, height);
@@ -223,7 +223,7 @@ class PDFThumbnailView {
         PDFJSDev.test('MOZCENTRAL || FIREFOX || GENERIC')) {
       canvas.mozOpaque = true;
     }
-    let ctx = canvas.getContext('2d', { alpha: false, });
+    let ctx = canvas.getContext('2d', { alpha: true, });
     let outputScale = getOutputScale(ctx);
 
     canvas.width = (this.canvasWidth * outputScale.sx) | 0;

@@ -515,7 +515,7 @@ class PDFPageView {
       canvas.mozOpaque = true;
     }
 
-    let ctx = canvas.getContext('2d', { alpha: false, });
+    let ctx = canvas.getContext('2d', { alpha: true, });
     let outputScale = getOutputScale(ctx);
     this.outputScale = outputScale;
 
@@ -557,6 +557,7 @@ class PDFPageView {
       canvasContext: ctx,
       transform,
       viewport: this.viewport,
+      background: 'transparent',
       renderInteractiveForms: this.renderInteractiveForms,
     };
     let renderTask = this.pdfPage.render(renderContext);
