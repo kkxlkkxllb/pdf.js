@@ -54,7 +54,19 @@ let AnnotateEditor = {
   },
 
   activeAnnotatorLayer () {
-    let { currentPage, cropperLayer, cropperArea, cropperModal, cloneBg, cropperMove,} = this;
+    let { 
+      currentPage, 
+      cropperLayer, 
+      cropperArea, 
+      cropperModal, 
+      cloneBg, 
+      cropperMove, 
+      cloneBgWrap, 
+      dot1,
+      dot2,
+      dot3,
+      dot4
+    } = this;
     
     if (this.currentPage) {
       if (this.currentPage.id === this.app.pdfViewer._currentPageNumber) {
@@ -83,16 +95,35 @@ let AnnotateEditor = {
     cropperArea.setAttribute('class', 'cropper-area')
     cropperLayer.appendChild(cropperArea)
 
+    cloneBgWrap = document.createElement('div')
+    cloneBgWrap.setAttribute('class', 'clone-bg-wrap')
+    cropperArea.appendChild(cloneBgWrap)
     cloneBg = document.createElement('img')
     cloneBg.setAttribute('class', 'clone-bg')
     cloneBg.style.width = containerW + 'px'
     cloneBg.style.height = containerH + 'px'
     cloneBg.src = canvasLy.toDataURL('image/webp')
-    cropperArea.appendChild(cloneBg)
+    cloneBgWrap.appendChild(cloneBg)
 
+    // 可拖拽区域
     cropperMove = document.createElement('div')
     cropperMove.setAttribute('class', 'cropper-move')
     cropperArea.appendChild(cropperMove)
+
+    //四周锚点
+    dot1 = document.createElement('div')
+    dot1.setAttribute('class', 'dot-ctrl dot-1')
+    cropperArea.appendChild(dot1)
+    dot2 = document.createElement('div')
+    dot2.setAttribute('class', 'dot-ctrl dot-2')
+    cropperArea.appendChild(dot2)
+    dot3 = document.createElement('div')
+    dot3.setAttribute('class', 'dot-ctrl dot-3')
+    cropperArea.appendChild(dot3)
+    dot4 = document.createElement('div')
+    dot4.setAttribute('class', 'dot-ctrl dot-4')
+    cropperArea.appendChild(dot4)
+
 
     this.currentPage = currentPage
     this.cropperLayer = cropperLayer
@@ -107,7 +138,7 @@ let AnnotateEditor = {
 
     cropperLayer.addEventListener('mousemove', cropperLayerMouseMove, false)
 
-    cropperLayer.addEventListener('mouseup', cropperLayerMoseUp, false)
+    cropperLayer.addEventListener('mouseup', cropperLayerMouseUp, false)
   },
 
   cropperMoveMouseDown (e) {
@@ -164,7 +195,7 @@ let AnnotateEditor = {
     }
   },
 
-  cropperLayerMoseUp (e) {
+  cropperLayerMouseUp (e) {
     this.ex = e.layerX
     this.ey = e.layerY
     let ox = this.sx < this.ex ? this.sx : this.ex 
@@ -181,7 +212,7 @@ let AnnotateEditor = {
 
   destroyAnnotatorLayer () {
     this.cropperLayer.removeEventListener('mousedown', cropperLayerMouseDown)
-    this.cropperLayer.removeEventListener('mouseup', cropperLayerMoseUp)
+    this.cropperLayer.removeEventListener('mouseup', cropperLayerMouseUp)
     this.cropperLayer.removeEventListener('mousemove', cropperLayerMouseMove)
     this.cropperMove.removeEventListener('mousedown', cropperMoveMouseDown)
     this.cropperLayer.remove()
@@ -209,8 +240,8 @@ function cropperLayerMouseMove (e) {
   AnnotateEditor.cropperLayerMouseMove(e)
 }
 
-function cropperLayerMoseUp (e) {
-  AnnotateEditor.cropperLayerMoseUp(e)
+function cropperLayerMouseUp (e) {
+  AnnotateEditor.cropperLayerMouseUp(e)
 }
 
 function initView (e) {
