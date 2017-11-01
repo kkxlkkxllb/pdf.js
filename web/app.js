@@ -43,6 +43,7 @@ import { PDFViewer } from './pdf_viewer';
 import { SecondaryToolbar } from './secondary_toolbar';
 import { Toolbar } from './toolbar';
 import { ViewHistory } from './view_history';
+import { AnnotateEditor } from './annotate_editor';
 
 const DEFAULT_SCALE_DELTA = 1.1;
 const DISABLE_AUTO_FETCH_LOADING_BAR_TIMEOUT = 5000;
@@ -185,6 +186,8 @@ let PDFViewerApplication = {
       }
 
       this.initialized = true;
+      // bill
+      AnnotateEditor.initialize()
     });
   },
 
@@ -1179,6 +1182,8 @@ let PDFViewerApplication = {
       // Setting the default one.
       this.pdfViewer.currentScaleValue = DEFAULT_SCALE_VALUE;
     }
+    // bill
+    this.eventBus.dispatch('appviewload', { source: this, });
   },
 
   cleanup() {
@@ -1652,10 +1657,6 @@ if (typeof PDFJSDev === 'undefined' || PDFJSDev.test('GENERIC')) {
 }
 
 function webViewerPageRendered(evt) {
-  // bill
-  pluginAnnotatorInit(evt)
-
-  //bill
 
   let pageNumber = evt.pageNumber;
   let pageIndex = pageNumber - 1;
@@ -1895,11 +1896,9 @@ function webViewerPreviousPage() {
 }
 function webViewerZoomIn() {
   PDFViewerApplication.zoomIn();
-  pluginAnnotatorZoomChange();
 }
 function webViewerZoomOut() {
   PDFViewerApplication.zoomOut();
-  pluginAnnotatorZoomChange();
 }
 function webViewerPageNumberChanged(evt) {
   let pdfViewer = PDFViewerApplication.pdfViewer;
@@ -2340,116 +2339,6 @@ let PDFPrintServiceFactory = {
     },
   },
 };
-
-let annotatorEditor
-
-function pluginAnnotatorZoomChange () {
-  let newScale = PDFViewerApplication.pdfViewer.currentScale;
-  console.log(PDFViewerApplication.pdfViewer)
-  annotatorEditor.cloneBg.style.width = annotatorEditor.source.viewport.width + 'px'
-  annotatorEditor.cloneBg.style.height = annotatorEditor.source.viewport.height + 'px'
-  
-}
-
-function pluginAnnotatorInit (evt) {
-  if (annotatorEditor) {
-    return
-  }
-  annotatorEditor = true
-  console.log(evt)
-  let canvasLy = evt.source.canvas
-  let ctx = canvasLy.getContext('2d')
-  let container = evt.source.div
-  let containerW = container.clientWidth
-  let containerH = container.clientHeight
-  let div = document.createElement('div')
-  div.setAttribute('class', 'cropper-layer')
-  container.appendChild(div)
-  annotatorEditor = {
-    source: evt.source,
-    cropperLayer: div
-  }
-  
-  let sx
-  let sy
-  let ex 
-  let ey
-  let dragging = false
-  let moving = false
-  let bgmodalDiv = document.createElement('div')
-  bgmodalDiv.setAttribute('class', 'cropper-modal')
-  div.appendChild(bgmodalDiv)
-  annotatorEditor.bgmodalDiv = bgmodalDiv
-  let cropperDiv = document.createElement('div')
-  cropperDiv.setAttribute('class', 'cropper-area')
-  div.appendChild(cropperDiv)
-  annotatorEditor.cropperDiv = cropperDiv
-  let cloneBg = document.createElement('img')
-  cloneBg.setAttribute('class', 'clone-bg')
-  cloneBg.style.width = containerW + 'px'
-  cloneBg.style.height = containerH + 'px'
-  cloneBg.src = canvasLy.toDataURL('image/webp')
-  cropperDiv.appendChild(cloneBg)
-  annotatorEditor.cloneBg = cloneBg
-  let cropperMove = document.createElement('div')
-  cropperMove.setAttribute('class', 'cropper-move')
-  cropperDiv.appendChild(cropperMove)
-  annotatorEditor.cropperMove = cropperMove
-  cropperMove.addEventListener('mousedown', (e) => {
-    e.stopPropagation()
-    console.log('drag start', e.offsetX)
-    moving = {
-      offsetX: e.offsetX,
-      offsetY: e.offsetY
-    }
-  }, false)
-  div.addEventListener('mousedown', (e) => {
-    if (sx && sy) {
-      if ((sx < e.layerX) && (e.layerX < ex) && (sy < e.layerY) && (e.layerY < ey)) {
-        return
-      }
-    }
-    sx = e.layerX
-    sy = e.layerY
-    dragging = true
-    cropperDiv.style.width = '0px'
-    cropperDiv.style.height = '0px'
-    cropperDiv.style.visibility = 'visible'
-    cropperDiv.style.transform = "translateX(" + sx + "px) translateY(" + sy + "px)"
-    cloneBg.style.transform = "translateX(-" + sx + "px) translateY(-" + sy + "px)"
-  },false)
-  div.addEventListener('mousemove', (e) => {
-    if (dragging) {
-      let mx = e.layerX
-      let my = e.layerY
-      let width = mx - sx
-      let height = my - sy
-      if (width > 0 && height > 0) {
-        cropperDiv.style.width = width + 'px'
-        cropperDiv.style.height = height + 'px'
-      }
-    } else if (moving) {
-      let mx = e.layerX - moving.offsetX
-      let my = e.layerY - moving.offsetY
-      cropperDiv.style.transform = "translateX(" + mx + "px) translateY(" + my + "px)"
-      cloneBg.style.transform = "translateX(-" + mx + "px) translateY(-" + my + "px)"
-    }
-  },false)
-  div.addEventListener('mouseup', (e) => {
-    ex = e.layerX
-    ey = e.layerY
-    let ox = sx < ex ? sx : ex 
-    let oy = sy < ey ? sy : ey
-    let width = Math.abs(ex - sx)
-    let height = Math.abs(ey - sy)
-    console.log(ox, oy, width, height)
-    // ctx.beginPath()
-    // ctx.fillStyle = 'rgba(0,0,0,0.1)'
-    // ctx.fillRect(ox, oy, width, height)
-    dragging = false
-    moving = false
-  },false)
-}
 
 export {
   PDFViewerApplication,
