@@ -20,10 +20,15 @@ let AnnotateEditor = {
     if (!this.currentPage) {
       return
     }
-    let newScale = this.app.pdfViewer.currentScale;
-    let currentPage = this.getCurrentPage()
-    this.cloneBg.style.width = currentPage.viewport.width + 'px'
-    this.cloneBg.style.height = currentPage.viewport.height + 'px'
+    // let newScale = this.app.pdfViewer.currentScale;
+    this.cloneBg.style.width = this.currentPage.viewport.width + 'px'
+    this.cloneBg.style.height = this.currentPage.viewport.height + 'px'
+  },
+
+  pageChange (page) {
+    if (this.currentPage) {
+      this.destroyAnnotatorLayer()
+    }
   },
 
   getCurrentPage () {
@@ -37,6 +42,15 @@ let AnnotateEditor = {
     eventBus.on('appviewload', initView)
     eventBus.on('zoomin', zoomChange);
     eventBus.on('zoomout', zoomChange);
+    eventBus.on('pagechanging', pageChange);
+  },
+
+  unbindEvents () {
+    let eventBus = this.eventBus;
+    eventBus.off('appviewload', initView)
+    eventBus.off('zoomin', zoomChange);
+    eventBus.off('zoomout', zoomChange);
+    eventBus.off('pagechanging', pageChange);
   },
 
   activeAnnotatorLayer () {
@@ -124,22 +138,29 @@ let AnnotateEditor = {
     if (this.dragging) {
       let mx = e.layerX
       let my = e.layerY
-      let width = mx - sx
-      let height = my - sy
+      let width = mx - this.sx
+      let height = my - this.sy
       if (width > 0 && height > 0) {
         this.cropperArea.style.width = width + 'px'
         this.cropperArea.style.height = height + 'px'
       }
     } else if (this.moving) {
-      let mx = e.layerX - moving.offsetX
-      let my = e.layerY - moving.offsetY
-      let t1 = mx + this.cropperMove.clientWidth < this.currentPage.viewport.width
-      let t2 = my + this.cropperMove.clientHeight < this.currentPage.viewport.height
-      let tof = mx >= 0 && my >= 0 && t1 && t2
-      if (tof) {
-        this.cropperArea.style.transform = "translateX(" + mx + "px) translateY(" + my + "px)"
-        this.cloneBg.style.transform = "translateX(-" + mx + "px) translateY(-" + my + "px)"    
-      } 
+      let mx = e.layerX - this.moving.offsetX
+      let my = e.layerY - this.moving.offsetY
+      let dx = this.currentPage.viewport.width - this.cropperMove.clientWidth
+      let dy = this.currentPage.viewport.height - this.cropperMove.clientHeight
+      if (mx < 0) {
+        mx = 0
+      } else if (mx > dx) {
+        mx = dx
+      }
+      if (my < 0) {
+        my = 0
+      } else if (my > dy) {
+        my = dy
+      }
+      this.cropperArea.style.transform = "translateX(" + mx + "px) translateY(" + my + "px)"
+      this.cloneBg.style.transform = "translateX(-" + mx + "px) translateY(-" + my + "px)"     
     }
   },
 
@@ -170,6 +191,10 @@ let AnnotateEditor = {
 
 function zoomChange () {
   AnnotateEditor.zoomChange()
+}
+
+function pageChange (page) {
+  AnnotateEditor.pageChange(page)
 }
 
 function cropperMoveMouseDown (e) {
