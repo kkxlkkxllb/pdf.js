@@ -131,20 +131,16 @@ let AnnotateEditor = {
   },
 
   cropperLayerMouseDown (e) {
-    
     this.dragging = true
-    if (this.sx && this.sx === e.layerX && this.sy && this.sy === e.layerY) {
-      console.log('resizing')
-    } else {
-      this.sx = e.layerX
-      this.sy = e.layerY
-      this.cropperArea.style.width = '0px'
-      this.cropperArea.style.height = '0px'
-      this.cropperArea.style.visibility = 'visible'
-      this.cropperArea.style.transform = "translateX(" + this.sx + "px) translateY(" + this.sy + "px)"
-      this.cloneBg.style.transform = "translateX(-" + this.sx + "px) translateY(-" + this.sy + "px)"
-    }
     
+    this.sx = e.layerX
+    this.sy = e.layerY
+    this.cropperArea.style.width = '0px'
+    this.cropperArea.style.height = '0px'
+    this.cropperArea.style.visibility = 'visible'
+    this.cropperArea.style.transform = "translateX(" + this.sx + "px) translateY(" + this.sy + "px)"
+    this.cloneBg.style.transform = "translateX(-" + this.sx + "px) translateY(-" + this.sy + "px)"
+  
   },
 
   cropperLayerMouseMove (e) {
@@ -154,7 +150,7 @@ let AnnotateEditor = {
       let my = e.layerY
       let width = mx - this.sx
       let height = my - this.sy
-      console.log(this.curPos)
+
       if (this.curPos) {
         switch (this.curPos) {
           case 'e':
@@ -204,15 +200,45 @@ let AnnotateEditor = {
             height = my - this.rect.oy
             if (height <= 0) {
               this.sy = my
+            } else {
+              my = this.rect.oy
             }
             if (width <= 0) {
               this.sx = mx
+            } else {
+              mx = this.rect.ox + this.rect.width
+            }
+            break;
+          case 'nw':
+            width = mx - this.rect.width - this.rect.ox
+            height = my - this.rect.height - this.rect.oy
+            if (height <= 0) {
+              this.sy = my
+            } else {
+              my = this.rect.oy + this.rect.height
+            }
+            if (width <= 0) {
+              this.sx = mx
+            } else {
+              mx = this.rect.ox + this.rect.width
+            }
+            break;
+          case 'ne':
+            width = mx - this.rect.ox
+            height = my - this.rect.height - this.rect.oy
+            if (height <= 0) {
+              this.sy = my
+            } else {
+              my = this.rect.oy + this.rect.height
+            }
+            if (width <= 0) {
+              this.sx = mx
+            } else {
+              mx = this.rect.ox
             }
             break;
         }
       }
-      
-      console.log(mx, my, width, height)
       
       this.cropperArea.style.width = Math.abs(width) + 'px'
       this.cropperArea.style.height = Math.abs(height) + 'px'
