@@ -13,8 +13,8 @@ let AnnotateEditor = {
   moving: false,
   sx: 0,
   sy: 0,
-  ex: 0,
-  ey: 0,
+  dotCtrls: [],
+  rect: {},
 
   zoomChange () {
     if (!this.currentPage) {
@@ -62,10 +62,6 @@ let AnnotateEditor = {
       cloneBg, 
       cropperMove, 
       cloneBgWrap, 
-      dot1,
-      dot2,
-      dot3,
-      dot4
     } = this;
     
     if (this.currentPage) {
@@ -109,22 +105,7 @@ let AnnotateEditor = {
     cropperMove = document.createElement('div')
     cropperMove.setAttribute('class', 'cropper-move')
     cropperArea.appendChild(cropperMove)
-
-    //四周锚点
-    dot1 = document.createElement('div')
-    dot1.setAttribute('class', 'dot-ctrl dot-1')
-    cropperArea.appendChild(dot1)
-    dot2 = document.createElement('div')
-    dot2.setAttribute('class', 'dot-ctrl dot-2')
-    cropperArea.appendChild(dot2)
-    dot3 = document.createElement('div')
-    dot3.setAttribute('class', 'dot-ctrl dot-3')
-    cropperArea.appendChild(dot3)
-    dot4 = document.createElement('div')
-    dot4.setAttribute('class', 'dot-ctrl dot-4')
-    cropperArea.appendChild(dot4)
-
-
+    
     this.currentPage = currentPage
     this.cropperLayer = cropperLayer
     this.cropperArea = cropperArea
@@ -132,13 +113,13 @@ let AnnotateEditor = {
     this.cloneBg = cloneBg
     this.cropperMove = cropperMove
 
+    this.addDotCtrl()
+
     cropperMove.addEventListener('mousedown', cropperMoveMouseDown, false)
-
     cropperLayer.addEventListener('mousedown', cropperLayerMouseDown, false)
-
     cropperLayer.addEventListener('mousemove', cropperLayerMouseMove, false)
-
     cropperLayer.addEventListener('mouseup', cropperLayerMouseUp, false)
+    // cropperLayer.addEventListener('mouseleave', cropperLayerMouseUp, false)
   },
 
   cropperMoveMouseDown (e) {
@@ -150,64 +131,126 @@ let AnnotateEditor = {
   },
 
   cropperLayerMouseDown (e) {
-    if (this.sx && this.sy) {
-      if ((this.sx < e.layerX) && (e.layerX < this.ex) && (this.sy < e.layerY) && (e.layerY < this.ey)) {
-        return
-      }
-    }
-    this.sx = e.layerX
-    this.sy = e.layerY
+    
     this.dragging = true
-    this.cropperArea.style.width = '0px'
-    this.cropperArea.style.height = '0px'
-    this.cropperArea.style.visibility = 'visible'
-    this.cropperArea.style.transform = "translateX(" + this.sx + "px) translateY(" + this.sy + "px)"
-    this.cloneBg.style.transform = "translateX(-" + this.sx + "px) translateY(-" + this.sy + "px)"
+    if (this.sx && this.sx === e.layerX && this.sy && this.sy === e.layerY) {
+      console.log('resizing')
+    } else {
+      this.sx = e.layerX
+      this.sy = e.layerY
+      this.cropperArea.style.width = '0px'
+      this.cropperArea.style.height = '0px'
+      this.cropperArea.style.visibility = 'visible'
+      this.cropperArea.style.transform = "translateX(" + this.sx + "px) translateY(" + this.sy + "px)"
+      this.cloneBg.style.transform = "translateX(-" + this.sx + "px) translateY(-" + this.sy + "px)"
+    }
+    
   },
 
   cropperLayerMouseMove (e) {
+    e.preventDefault()
     if (this.dragging) {
       let mx = e.layerX
       let my = e.layerY
       let width = mx - this.sx
       let height = my - this.sy
-      if (width > 0 && height > 0) {
-        this.cropperArea.style.width = width + 'px'
-        this.cropperArea.style.height = height + 'px'
+      console.log(this.curPos)
+      if (this.curPos) {
+        switch (this.curPos) {
+          case 'e':
+            height = this.rect.height
+            width = mx - this.rect.ox
+            my = this.rect.oy
+            if (width <= 0) {
+              this.sx = mx
+            }
+            break;
+          case 's':
+            width = this.rect.width
+            height = my - this.rect.oy
+            mx = this.rect.ox
+            if (height <= 0) {
+              this.sy = my
+            }
+            break;
+          case 'w':
+            height = this.rect.height
+            width = mx - this.rect.width - this.rect.ox
+            my = this.rect.oy
+            if (width <= 0) {
+              this.sx = mx
+            }
+            break;
+          case 'n':
+            width = this.rect.width
+            height = my - this.rect.height - this.rect.oy
+            mx = this.rect.ox
+            if (height <= 0) {
+              this.sy = my
+            }
+            break;
+          case 'se':
+            width = mx - this.rect.ox 
+            height = my - this.rect.oy
+            if (width <= 0) {
+              this.sx = mx
+            }
+            if (height <= 0) {
+              this.sy = my
+            }
+            break;
+          case 'sw':
+            width = mx - this.rect.width - this.rect.ox
+            height = my - this.rect.oy
+            if (height <= 0) {
+              this.sy = my
+            }
+            if (width <= 0) {
+              this.sx = mx
+            }
+            break;
+        }
+      }
+      
+      console.log(mx, my, width, height)
+      
+      this.cropperArea.style.width = Math.abs(width) + 'px'
+      this.cropperArea.style.height = Math.abs(height) + 'px'
+      if (width < 0 || height < 0) {
+        this.cropperArea.style.transform = "translateX(" + mx + "px) translateY(" + my + "px)"
+        this.cloneBg.style.transform = "translateX(-" + mx + "px) translateY(-" + my + "px)" 
       }
     } else if (this.moving) {
       let mx = e.layerX - this.moving.offsetX
       let my = e.layerY - this.moving.offsetY
-      let dx = this.currentPage.viewport.width - this.cropperMove.clientWidth
-      let dy = this.currentPage.viewport.height - this.cropperMove.clientHeight
-      if (mx < 0) {
-        mx = 0
-      } else if (mx > dx) {
-        mx = dx
-      }
-      if (my < 0) {
-        my = 0
-      } else if (my > dy) {
-        my = dy
-      }
+      let dx = this.currentPage.viewport.width - this.cropperArea.clientWidth
+      let dy = this.currentPage.viewport.height - this.cropperArea.clientHeight
+      mx = Math.max(mx, 0)
+      mx = Math.min(mx, dx)
+      my = Math.max(my, 0)
+      my = Math.min(my, dy)
       this.cropperArea.style.transform = "translateX(" + mx + "px) translateY(" + my + "px)"
-      this.cloneBg.style.transform = "translateX(-" + mx + "px) translateY(-" + my + "px)"     
+      this.cloneBg.style.transform = "translateX(-" + mx + "px) translateY(-" + my + "px)"
+      this.sx = mx 
+      this.sy = my   
     }
   },
 
   cropperLayerMouseUp (e) {
-    this.ex = e.layerX
-    this.ey = e.layerY
-    let ox = this.sx < this.ex ? this.sx : this.ex 
-    let oy = this.sy < this.ey ? this.sy : this.ey
-    let width = Math.abs(this.ex - this.sx)
-    let height = Math.abs(this.ey - this.sy)
-    console.log(ox, oy, width, height)
-    // ctx.beginPath()
-    // ctx.fillStyle = 'rgba(0,0,0,0.1)'
-    // ctx.fillRect(ox, oy, width, height)
-    this.dragging = false
-    this.moving = false
+    if (this.dragging || this.moving) {
+      let width = this.cropperArea.clientWidth
+      let height = this.cropperArea.clientHeight
+      let ox = this.sx
+      let oy = this.sy
+      this.rect = {ox, oy, width, height}
+      console.log(this.rect)
+      // ctx.beginPath()
+      // ctx.fillStyle = 'rgba(0,0,0,0.1)'
+      // ctx.fillRect(ox, oy, width, height)
+      this.dragging = false
+      this.moving = false
+      this.curPos = false
+    }
   },
 
   destroyAnnotatorLayer () {
@@ -215,8 +258,36 @@ let AnnotateEditor = {
     this.cropperLayer.removeEventListener('mouseup', cropperLayerMouseUp)
     this.cropperLayer.removeEventListener('mousemove', cropperLayerMouseMove)
     this.cropperMove.removeEventListener('mousedown', cropperMoveMouseDown)
+    for (let dot of this.dotCtrls) {
+      dot.removeEventListener('mousemove', dotCtrlMouseMove)
+      dot.removeEventListener('mousedown', dotCtrlMouseDown)
+    }
     this.cropperLayer.remove()
     this.currentPage = null
+  },
+
+  addDotCtrl () {
+    //四周8个锚点
+    for (let id of ['nw','n','ne','e','se','s','sw','w']) {
+      let dot = document.createElement('div')
+      dot.setAttribute('data-ac', id)
+      dot.setAttribute('class', 'dot-ctrl dot-' + id)
+      dot.addEventListener('mousemove', dotCtrlMouseMove, false)
+      dot.addEventListener('mousedown', dotCtrlMouseDown, false)
+      this.cropperArea.appendChild(dot)
+      this.dotCtrls.push(dot)
+    }
+
+  },
+
+  dotCtrlMouseMove (e) {
+    e.stopPropagation()
+  },
+
+  dotCtrlMouseDown (e) {
+    this.curPos = e.currentTarget.dataset.ac
+    this.dragging = true
+    e.stopPropagation() 
   }
 }
 
@@ -242,6 +313,14 @@ function cropperLayerMouseMove (e) {
 
 function cropperLayerMouseUp (e) {
   AnnotateEditor.cropperLayerMouseUp(e)
+}
+
+function dotCtrlMouseMove (e) {
+  AnnotateEditor.dotCtrlMouseMove(e)
+}
+
+function dotCtrlMouseDown (e) {
+  AnnotateEditor.dotCtrlMouseDown(e)
 }
 
 function initView (e) {
