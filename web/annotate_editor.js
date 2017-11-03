@@ -14,6 +14,7 @@ let AnnotateEditor = {
   sx: 0,
   sy: 0,
   dotCtrls: [],
+  btnCtrls: [],
   rect: {},
 
   zoomChange () {
@@ -114,12 +115,13 @@ let AnnotateEditor = {
     this.cropperMove = cropperMove
 
     this.addDotCtrl()
+    this.addBtnCtrl()
 
     cropperMove.addEventListener('mousedown', cropperMoveMouseDown, false)
     cropperLayer.addEventListener('mousedown', cropperLayerMouseDown, false)
     cropperLayer.addEventListener('mousemove', cropperLayerMouseMove, false)
     cropperLayer.addEventListener('mouseup', cropperLayerMouseUp, false)
-    // cropperLayer.addEventListener('mouseleave', cropperLayerMouseUp, false)
+    cropperLayer.addEventListener('mouseleave', cropperLayerMouseUp, false)
   },
 
   cropperMoveMouseDown (e) {
@@ -131,8 +133,12 @@ let AnnotateEditor = {
   },
 
   cropperLayerMouseDown (e) {
+    if (e.target.className !== 'cropper-modal') {
+      e.preventDefault()
+      return
+    }
     this.dragging = true
-    
+    this.hideBtnCtrls()
     this.sx = e.layerX
     this.sy = e.layerY
     this.cropperArea.style.width = '0px'
@@ -140,7 +146,6 @@ let AnnotateEditor = {
     this.cropperArea.style.visibility = 'visible'
     this.cropperArea.style.transform = "translateX(" + this.sx + "px) translateY(" + this.sy + "px)"
     this.cloneBg.style.transform = "translateX(-" + this.sx + "px) translateY(-" + this.sy + "px)"
-  
   },
 
   cropperLayerMouseMove (e) {
@@ -269,13 +274,10 @@ let AnnotateEditor = {
       let ox = this.sx
       let oy = this.sy
       this.rect = {ox, oy, width, height}
-      console.log(this.rect)
-      // ctx.beginPath()
-      // ctx.fillStyle = 'rgba(0,0,0,0.1)'
-      // ctx.fillRect(ox, oy, width, height)
       this.dragging = false
       this.moving = false
       this.curPos = false
+      this.showBtnCtrls()
     }
   },
 
@@ -288,8 +290,12 @@ let AnnotateEditor = {
       dot.removeEventListener('mousemove', dotCtrlMouseMove)
       dot.removeEventListener('mousedown', dotCtrlMouseDown)
     }
+    for (let btn of this.btnCtrls) {
+      btn.removeEventListener('click', btnCtrlClick)
+    }
     this.cropperLayer.remove()
     this.currentPage = null
+    this.annoBtn.style.display = 'block'
   },
 
   addDotCtrl () {
@@ -304,6 +310,42 @@ let AnnotateEditor = {
       this.dotCtrls.push(dot)
     }
 
+  },
+
+  addBtnCtrl () {
+    for (let id of ['confirm', 'cancel']) {
+      let btn = document.createElement('div')
+      btn.setAttribute('class', id + '-btn btn-ctrl')
+      btn.setAttribute('data-ac', id)
+      btn.style.display = 'none'
+      btn.addEventListener('click', btnCtrlClick, false)
+      this.cropperArea.appendChild(btn)
+      this.btnCtrls.push(btn)
+    }
+  },
+
+  btnCtrlClick (e) {
+    e.preventDefault()
+    e.stopPropagation()
+    let ac = e.currentTarget.dataset.ac
+    switch (ac) {
+      case 'confirm':
+        this.eventBus.dispatch('annotate_done', {rect: this.rect})
+        break;
+    }
+    this.destroyAnnotatorLayer()
+  },
+
+  hideBtnCtrls () {
+    for (let btn of this.btnCtrls) {
+      btn.style.display = 'none'
+    }
+  },
+
+  showBtnCtrls () {
+    for (let btn of this.btnCtrls) {
+      btn.style.display = 'block'
+    }
   },
 
   dotCtrlMouseMove (e) {
@@ -349,6 +391,10 @@ function dotCtrlMouseDown (e) {
   AnnotateEditor.dotCtrlMouseDown(e)
 }
 
+function btnCtrlClick (e) {
+  AnnotateEditor.btnCtrlClick(e)
+}
+
 function initView (e) {
   let annoBtn
   let app = e.source
@@ -359,7 +405,7 @@ function initView (e) {
   container.appendChild(annoBtn)
   annoBtn.addEventListener('click', (e) => {
     AnnotateEditor.activeAnnotatorLayer()
-    // annoBtn.style.display = 'none'
+    annoBtn.style.display = 'none'
   }, false)
   AnnotateEditor.app = app 
   AnnotateEditor.annoBtn = annoBtn

@@ -44,6 +44,7 @@ import { SecondaryToolbar } from './secondary_toolbar';
 import { Toolbar } from './toolbar';
 import { ViewHistory } from './view_history';
 import { AnnotateEditor } from './annotate_editor';
+import { AnnotateRender } from './annotate_render';
 
 const DEFAULT_SCALE_DELTA = 1.1;
 const DISABLE_AUTO_FETCH_LOADING_BAR_TIMEOUT = 5000;
@@ -188,6 +189,7 @@ let PDFViewerApplication = {
       this.initialized = true;
       // bill
       AnnotateEditor.initialize()
+      AnnotateRender.initialize()
     });
   },
 

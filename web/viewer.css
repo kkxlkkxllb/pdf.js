@@ -1979,10 +1979,12 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   height: 100%;
   cursor: move;
   user-select: none;
+  /*background-color: #F1E8B4;
+  opacity: 0.2;*/
 }
 .clone-bg {
-  background-color: #F1E8B4;
   user-select: none;
+  background-color: #F1E8B4;
 }
 .cropper-area {
   position: absolute;
@@ -2068,4 +2070,28 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   top: 50%;
   left: -3px;
   margin-top: -3px;
+}
+.btn-ctrl {
+  position: absolute;
+  bottom: -30px;
+  padding: 4px 8px;
+  background-color: #333;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  z-index: 10;
+}
+.confirm-btn {
+  right: 0;
+}
+.cancel-btn {
+  right: 50px;
+}
+.confirm-btn:after {
+  content: '确认';
+  color: #7ED321;
+}
+.cancel-btn:after {
+  content: '取消';
+  color: #C82606;
 }
