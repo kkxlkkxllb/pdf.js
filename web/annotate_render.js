@@ -58,8 +58,10 @@ let AnnotateRender = {
   },
 
   scaleChange () {
-    let newScale = this.app.pdfViewer.currentScale;
-    console.log(newScale)
+    if (this.app) {
+      let newScale = this.app.pdfViewer.currentScale;
+      console.log(newScale)
+    }  
   }
 
 }
