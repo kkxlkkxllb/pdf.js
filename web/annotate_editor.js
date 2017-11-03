@@ -17,7 +17,7 @@ let AnnotateEditor = {
   btnCtrls: [],
   rect: {},
 
-  zoomChange () {
+  scaleChange () {
     if (!this.currentPage) {
       return
     }
@@ -41,16 +41,14 @@ let AnnotateEditor = {
     let eventBus = getGlobalEventBus();
     this.eventBus = eventBus;
     eventBus.on('appviewload', initView)
-    eventBus.on('zoomin', zoomChange);
-    eventBus.on('zoomout', zoomChange);
+    eventBus.on('scalechanging', scaleChange);
     eventBus.on('pagechanging', pageChange);
   },
 
   unbindEvents () {
     let eventBus = this.eventBus;
     eventBus.off('appviewload', initView)
-    eventBus.off('zoomin', zoomChange);
-    eventBus.off('zoomout', zoomChange);
+    eventBus.off('scalechanging', scaleChange);
     eventBus.off('pagechanging', pageChange);
   },
 
@@ -330,7 +328,7 @@ let AnnotateEditor = {
     let ac = e.currentTarget.dataset.ac
     switch (ac) {
       case 'confirm':
-        this.eventBus.dispatch('annotate_done', {rect: this.rect})
+        this.eventBus.dispatch('annotate_done', {rect: this.rect, id: this.currentPage.id})
         break;
     }
     this.destroyAnnotatorLayer()
@@ -359,8 +357,8 @@ let AnnotateEditor = {
   }
 }
 
-function zoomChange () {
-  AnnotateEditor.zoomChange()
+function scaleChange () {
+  AnnotateEditor.scaleChange()
 }
 
 function pageChange (page) {

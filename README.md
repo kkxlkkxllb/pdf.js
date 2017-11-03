@@ -6,6 +6,25 @@ PDF.js is community-driven and supported by Mozilla Labs. Our goal is to
 create a general-purpose, web standards-based platform for parsing and
 rendering PDFs.
 
+## 加入注释编辑器功能 AnnotateEditor
+
+新增功能文件
+
+- web/annotate_eidtor.js
+- web/annotate_render.js
+
+src/display
+- canvas.js
+
+setFillRGBColor
+
+```
+if (r === 255 && g === 255 && b === 255) {
+   color = 'transparent';
+}
+```
+
+
 ## Contributing
 
 PDF.js is an open source project and always looking for more contributors. To

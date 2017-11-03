@@ -1961,6 +1961,7 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   height: 100%;
   user-select: none;
   cursor: crosshair;
+  z-index: 5;
 }
 .cropper-modal {
   top: 0;
@@ -1984,7 +1985,7 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
 }
 .clone-bg {
   user-select: none;
-  background-color: #F1E8B4;
+  background-color: rgba(247,205,70,0.50);
 }
 .cropper-area {
   position: absolute;
@@ -2012,6 +2013,7 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   font-size: 18px;
   background-color: #2692EE;
   border-radius: 4px;
+  z-index: 99;
 }
 .clone-bg-wrap {
   width: 100%;
@@ -2094,4 +2096,14 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
 .cancel-btn:after {
   content: '取消';
   color: #C82606;
+}
+.canvasWrapper {
+  z-index: 3;
+  position: relative;
+}
+.mark-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
 }
