@@ -47,14 +47,13 @@ let AnnotateRender = {
     }
     if (this.app) {
       if (this.marks[e.pageNumber]) {    
-        this.marks[e.pageNumber].done = false  
-        this.markRenderOn(e.pageNumber)    
+        this.markRenderOn(e.pageNumber, true)    
       }
     }  
   },
 
-  markRenderOn (id) {
-    if (this.marks[id] && !this.marks[id].done) {
+  markRenderOn (id, always = false) {
+    if (this.marks[id]) {
       console.log('append mark on page ', id)
       let page = this.getPageByNum(id)
       if (!this.marks[id].layer) {
@@ -64,6 +63,9 @@ let AnnotateRender = {
         this.marks[id].layer = layer
       }
       for (let m of this.marks[id]) {
+        if (m.done && !always) {
+          return
+        }
         let [ox, oy] = page.viewport.convertToViewportPoint(m.location.x, m.location.y)
         let width = m.location.w * page.scale
         let height =  m.location.h * page.scale
@@ -74,7 +76,6 @@ let AnnotateRender = {
           this.renderAvatar(this.marks[id].layer, m.user, left, oy + height / 2, m.id)
         } 
       }
-      this.marks[id].done = true
     }
   },
 
@@ -91,6 +92,13 @@ let AnnotateRender = {
       this.markRenderOn(p)
     }
     this.loaded = true
+  },
+
+  addSingleMark (location) {
+    let id = location.p
+    this.marks[id] = this.marks[id] || []
+    this.marks[id].push({location: location, done: false})
+    this.markRenderOn(id)
   },
 
   renderAvatar (layer, user, left, y, id) {
@@ -128,8 +136,8 @@ let AnnotateRender = {
 
 }
 
-function addMarks (location) {
-  AnnotateRender.dataLoaded([{location}])
+function addMarks (e) {
+  AnnotateRender.addSingleMark(e)
 }
 
 function pageRednered (e) {
