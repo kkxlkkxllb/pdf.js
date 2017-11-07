@@ -1672,10 +1672,6 @@ var CanvasGraphics = (function CanvasGraphicsClosure() {
     },
     setFillRGBColor: function CanvasGraphics_setFillRGBColor(r, g, b) {
       var color = Util.makeCssRgb(r, g, b);
-      // bill insert
-      if (r === 255 && g === 255 && b === 255) {
-        color = 'transparent';
-      }
       this.ctx.fillStyle = color;
       this.current.fillColor = color;
       this.current.patternFill = false;

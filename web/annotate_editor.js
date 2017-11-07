@@ -3,6 +3,7 @@ import { getGlobalEventBus } from './dom_events';
 let AnnotateEditor = {
   app: null,
   annoBtn: null,
+  annoTip: null,
   cloneBg: null,
   currentPage: null,
   cropperLayer: null,
@@ -21,7 +22,6 @@ let AnnotateEditor = {
     if (!this.currentPage) {
       return
     }
-    // let newScale = this.app.pdfViewer.currentScale;
     this.cloneBg.style.width = this.currentPage.viewport.width + 'px'
     this.cloneBg.style.height = this.currentPage.viewport.height + 'px'
   },
@@ -40,9 +40,11 @@ let AnnotateEditor = {
   initialize () {
     let eventBus = getGlobalEventBus();
     this.eventBus = eventBus;
-    eventBus.on('appviewload', initView)
+    eventBus.on('appviewload', initView);
     eventBus.on('scalechanging', scaleChange);
     eventBus.on('pagechanging', pageChange);
+    eventBus.on('annotate_complete', pageChange);
+    eventBus.on('annotate_cancel', pageChange);
   },
 
   unbindEvents () {
@@ -50,19 +52,21 @@ let AnnotateEditor = {
     eventBus.off('appviewload', initView)
     eventBus.off('scalechanging', scaleChange);
     eventBus.off('pagechanging', pageChange);
+    eventBus.off('annotate_complete', pageChange);
+    eventBus.off('annotate_cancel', pageChange);
   },
 
   activeAnnotatorLayer () {
-    let { 
-      currentPage, 
-      cropperLayer, 
-      cropperArea, 
-      cropperModal, 
-      cloneBg, 
-      cropperMove, 
-      cloneBgWrap, 
+    let {
+      currentPage,
+      cropperLayer,
+      cropperArea,
+      cropperModal,
+      cloneBg,
+      cropperMove,
+      cloneBgWrap,
     } = this;
-    
+
     if (this.currentPage) {
       if (this.currentPage.id === this.app.pdfViewer._currentPageNumber) {
         return
@@ -71,6 +75,7 @@ let AnnotateEditor = {
         this.destroyAnnotatorLayer()
       }
     }
+
     currentPage = this.getCurrentPage()
 
     let container = currentPage.div
@@ -104,7 +109,7 @@ let AnnotateEditor = {
     cropperMove = document.createElement('div')
     cropperMove.setAttribute('class', 'cropper-move')
     cropperArea.appendChild(cropperMove)
-    
+
     this.currentPage = currentPage
     this.cropperLayer = cropperLayer
     this.cropperArea = cropperArea
@@ -114,6 +119,7 @@ let AnnotateEditor = {
 
     this.addDotCtrl()
     this.addBtnCtrl()
+    this.applyViewStatus(1)
 
     cropperMove.addEventListener('mousedown', cropperMoveMouseDown, false)
     cropperLayer.addEventListener('mousedown', cropperLayerMouseDown, false)
@@ -123,6 +129,9 @@ let AnnotateEditor = {
   },
 
   cropperMoveMouseDown (e) {
+    if (this.lockArea) {
+      return
+    }
     e.stopPropagation()
     this.moving = {
       offsetX: e.offsetX,
@@ -131,6 +140,12 @@ let AnnotateEditor = {
   },
 
   cropperLayerMouseDown (e) {
+    if (this.lockArea) {
+      if (e.target.className === 'cropper-modal') {
+        this.eventBus.dispatch('annotate_cancel')
+      }
+      return
+    }
     if (e.target.className !== 'cropper-modal') {
       e.preventDefault()
       return
@@ -189,7 +204,7 @@ let AnnotateEditor = {
             }
             break;
           case 'se':
-            width = mx - this.rect.ox 
+            width = mx - this.rect.ox
             height = my - this.rect.oy
             if (width <= 0) {
               this.sx = mx
@@ -242,12 +257,12 @@ let AnnotateEditor = {
             break;
         }
       }
-      
+
       this.cropperArea.style.width = Math.abs(width) + 'px'
       this.cropperArea.style.height = Math.abs(height) + 'px'
       if (width < 0 || height < 0) {
         this.cropperArea.style.transform = "translateX(" + mx + "px) translateY(" + my + "px)"
-        this.cloneBg.style.transform = "translateX(-" + mx + "px) translateY(-" + my + "px)" 
+        this.cloneBg.style.transform = "translateX(-" + mx + "px) translateY(-" + my + "px)"
       }
     } else if (this.moving) {
       let mx = e.layerX - this.moving.offsetX
@@ -260,8 +275,8 @@ let AnnotateEditor = {
       my = Math.min(my, dy)
       this.cropperArea.style.transform = "translateX(" + mx + "px) translateY(" + my + "px)"
       this.cloneBg.style.transform = "translateX(-" + mx + "px) translateY(-" + my + "px)"
-      this.sx = mx 
-      this.sy = my   
+      this.sx = mx
+      this.sy = my
     }
   },
 
@@ -292,8 +307,10 @@ let AnnotateEditor = {
       btn.removeEventListener('click', btnCtrlClick)
     }
     this.cropperLayer.remove()
+    this.applyViewStatus(3)
+    this.lockArea = false
     this.currentPage = null
-    this.annoBtn.style.display = 'block'
+    
   },
 
   addDotCtrl () {
@@ -328,14 +345,37 @@ let AnnotateEditor = {
     let ac = e.currentTarget.dataset.ac
     switch (ac) {
       case 'confirm':
-        this.eventBus.dispatch('annotate_done', {rect: this.rect, id: this.currentPage.id})
+        this.hideDotCtrls()
+        this.hideBtnCtrls()
+        this.lockArea = true
+        let dest = {rect: this.rect, id: this.currentPage.id};
+        let p = this.app.pdfViewer.currentPageNumber;
+        let viewport = this.app.pdfViewer.getPageView(p-1).viewport;
+        let [x, y] = viewport.convertToPdfPoint(dest.rect.ox, dest.rect.oy);
+        let scale = this.getCurrentPage().scale
+        let w = dest.rect.width/scale;
+        let h = dest.rect.height/scale;
+
+        let location = {p, x, y, w, h};
+        location.sy = e.pageY - this.cropperMove.clientHeight / 2
+        this.applyViewStatus(2)
+        this.eventBus.dispatch('annotate_done', location)
+        break;
+      case 'cancel':
+        this.destroyAnnotatorLayer()
         break;
     }
-    this.destroyAnnotatorLayer()
+    
   },
 
   hideBtnCtrls () {
     for (let btn of this.btnCtrls) {
+      btn.style.display = 'none'
+    }
+  },
+
+  hideDotCtrls () {
+    for (let btn of this.dotCtrls) {
       btn.style.display = 'none'
     }
   },
@@ -353,8 +393,56 @@ let AnnotateEditor = {
   dotCtrlMouseDown (e) {
     this.curPos = e.currentTarget.dataset.ac
     this.dragging = true
-    e.stopPropagation() 
+    e.stopPropagation()
+  },
+
+  applyViewStatus (status) {
+    switch (status) {
+      // 标注开始
+      case 1:
+        this.annoBtn.style.display = 'none'
+        this.annoTip.style.display = 'block'
+        this.cropperMove.style.cursor = 'move'
+        this.cropperLayer.style.cursor = 'crosshair'//'url("http://www.zhaosoft.com/tool/cur/cur.cur"), auto'//
+        break;
+      // 标注确认选区
+      case 2:
+        this.app.pdfViewer.container.style.overflow = 'hidden'
+        this.cropperMove.style.cursor = 'default'
+        this.cropperLayer.style.cursor = 'default'
+        this.annoTip.style.display = 'none'
+        break;
+      // 标注完成/撤销
+      case 3:
+        this.annoBtn.style.display = 'block'
+        this.annoTip.style.display = 'none'
+        this.app.pdfViewer.container.style.overflow = 'auto' 
+        break;
+    }
+  },
+
+  initView (e) {
+    if (this.app) {
+      return
+    }
+    let app = e.source
+    let container = app.pdfViewer.container
+    let annoBtn = document.createElement('div')
+    annoBtn.setAttribute('class', 'annotator-btn')
+    annoBtn.innerText = '添加我的标注'
+    container.appendChild(annoBtn)
+    let annoTip = document.createElement('div')
+    annoTip.setAttribute('class', 'annotator-tip')
+    annoTip.innerText = '拖动鼠标框选段落'
+    container.appendChild(annoTip)
+    annoBtn.addEventListener('click', (e) => {
+      this.activeAnnotatorLayer()
+    }, false)
+    this.app = app
+    this.annoBtn = annoBtn
+    this.annoTip = annoTip
   }
+
 }
 
 function scaleChange () {
@@ -394,19 +482,7 @@ function btnCtrlClick (e) {
 }
 
 function initView (e) {
-  let annoBtn
-  let app = e.source
-  let container = app.pdfViewer.container
-  annoBtn = document.createElement('div')
-  annoBtn.setAttribute('class', 'annotator-btn')
-  annoBtn.innerText = '添加我的标注'
-  container.appendChild(annoBtn)
-  annoBtn.addEventListener('click', (e) => {
-    AnnotateEditor.activeAnnotatorLayer()
-    annoBtn.style.display = 'none'
-  }, false)
-  AnnotateEditor.app = app 
-  AnnotateEditor.annoBtn = annoBtn
+  AnnotateEditor.initView(e)
 }
 
 export {

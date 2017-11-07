@@ -1952,7 +1952,6 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
     display: none;
   }
 }
-
 .cropper-layer {
   position: absolute;
   top: 0;
@@ -1961,7 +1960,7 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   height: 100%;
   user-select: none;
   cursor: crosshair;
-  z-index: 5;
+  z-index: 7;
 }
 .cropper-modal {
   top: 0;
@@ -1980,12 +1979,14 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   height: 100%;
   cursor: move;
   user-select: none;
+  background-color: rgba(247,205,70,0.34);
   /*background-color: #F1E8B4;
   opacity: 0.2;*/
 }
 .clone-bg {
   user-select: none;
-  background-color: rgba(247,205,70,0.50);
+  background-color: white;
+  max-width: none;
 }
 .cropper-area {
   position: absolute;
@@ -2006,13 +2007,26 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   width: 150px;
   cursor: pointer;
   left: 50%;
-  margin-left: 25px;
+  margin-left: 5px;
   text-align: center;
   color: white;
   line-height: 40px;
   font-size: 18px;
   background-color: #2692EE;
   border-radius: 4px;
+  z-index: 99;
+}
+.annotator-tip {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  width: 150px;
+  left: 50%;
+  margin-left: 100px;
+  text-align: center;
+  color: white;
+  line-height: 40px;
+  font-size: 14px;
   z-index: 99;
 }
 .clone-bg-wrap {
@@ -2105,5 +2119,19 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 1;
+  right: 0;
+  z-index: 6;
+}
+.anno-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  position: absolute;
+  cursor: pointer;
+}
+.anno-highlighter {
+  position: absolute;
+  outline: 2px dashed #39f;
+  outline-color: rgba(51, 153, 255, 0.75);
+  z-index: 10;
 }
